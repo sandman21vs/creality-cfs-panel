@@ -15,11 +15,15 @@ do Mainsail e ser empacotado no [Creality Helper Script](https://guilouz.github.
 
 ## Estado atual
 
-- ✅ **v1 (FEITO):** painel **CFS read-only**. Conecta no WebSocket :9999, puxa `boxsInfo`+
-  `boxConfig` e renderiza os slots (anel colorido, label `1A–1D`, tipo/produto via `boxsInfo`
-  + catálogo, % restante, slot ativo, AUTO, temp/umidade da caixa). Tem modo **Demo** e
-  auto-refresh/reconexão. Git iniciado (branch `main`, 1º commit).
-- ⏳ **Próximo:** expandir para o **dashboard completo** (abaixo) e adicionar **controles** do CFS.
+- ✅ **v1:** painel **CFS read-only** (slots, cor, produto, %, ativo, AUTO, temp/umidade).
+- ✅ **v2–v4:** **dashboard completo** + **controles**. Telemetria empurrada pelo WS:9999
+  (temps bico/mesa/câmara, LED, ventiladores, velocidade, impressão atual com pause/resume/stop,
+  posição XYZ) parseada e renderizada; **câmera** MJPEG; abas **Filamento** (Feed/Retrair, AUTO,
+  Auto-feed, secagem, editar slot, reler RFID), **Controle** (home/jog/Z-offset/G-code),
+  **Arquivos** (listar/imprimir/excluir), **Registros**, **Vídeo**. Campos e shapes **verificados
+  capturando o WS:9999 real da K1C** (temps são string, fans usam `*Pct`, `curPosition` é string).
+- ⚠️ **A validar na K1C:** os comandos de **leitura** estão verificados; os de **escrita/controle**
+  (`set`) seguem docs/device-api.md mas ainda **não foram acionados** no hardware — testar 1 a 1.
 
 ## Como rodar / continuar
 
