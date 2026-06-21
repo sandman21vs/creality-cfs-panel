@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Creality CFS Panel</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="title">Creality <span>CFS Panel</span></div>
+    <div class="conn">
+      <input id="ip" type="text" placeholder="IP da impressora (ex.: 192.168.100.13)" autocomplete="off">
+      <button id="btn-connect">Conectar</button>
+      <button id="btn-demo" title="Carregar amostra (sem impressora)">Demo</button>
+      <span id="status" class="status off">desconectado</span>
+    </div>
+  </header>
+
+  <main id="content">
+    <p class="hint" id="empty-hint">Informe o IP da impressora e clique em <b>Conectar</b>.</p>
+    <div id="boxes" class="boxes"></div>
+    <p class="hint footer-hint" id="select-hint" hidden>
+      <span class="dot"></span> Selecione um slot (clique) — Feed/Retração chegam no v2.
+    </p>
+  </main>
+
+  <script src="js/cfs-model.js"></script>
+  <script src="js/cfs-ws.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

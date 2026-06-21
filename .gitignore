@@ -1,0 +1,7 @@
+# reference clones (study only — not part of the project)
+references/
+
+# OS / editor cruft
+Thumbs.db
+.DS_Store
+*.log
