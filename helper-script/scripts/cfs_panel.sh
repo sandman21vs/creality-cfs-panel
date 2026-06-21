@@ -83,6 +83,7 @@ function install_cfs_panel() {
         rm -rf "$CFS_PANEL_FOLDER"
         mkdir -p "$CFS_PANEL_FOLDER"
         cp -a "$CFS_PANEL_SRC"/. "$CFS_PANEL_FOLDER"/
+        chmod -R a+rX "$CFS_PANEL_FOLDER"
         echo -e "Info: Configuring Nginx (port ${CFS_PANEL_PORT})..."
         _cfs_panel_inject_nginx
         echo -e "Info: Restarting Nginx service..."

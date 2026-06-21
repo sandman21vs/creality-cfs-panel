@@ -68,6 +68,8 @@ mkdir -p "${DEST_DIR}"
 cp -a "${SRC_DIR}/index.html" "${DEST_DIR}/"
 cp -a "${SRC_DIR}/css"        "${DEST_DIR}/"
 cp -a "${SRC_DIR}/js"         "${DEST_DIR}/"
+# O worker do Nginx roda como www-data: garante leitura/traversal (umask do root e 077).
+chmod -R a+rX "${DEST_DIR}"
 
 # --- 3. Injeta o server block no Nginx (idempotente) -------------------------
 # Remove um bloco antigo (entre os marcadores), se existir.
