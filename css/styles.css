@@ -4,6 +4,8 @@
   --warn:#f59e0b; --bad:#ef4444;
 }
 *{box-sizing:border-box}
+/* o atributo hidden deve vencer regras de autor com display:grid/flex (modal, dashboard, abas) */
+[hidden]{display:none !important}
 html,body{margin:0;height:100%}
 body{background:var(--bg);color:var(--text);font:14px/1.45 system-ui,Segoe UI,Roboto,Arial,sans-serif}
 
