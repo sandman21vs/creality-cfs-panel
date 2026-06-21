@@ -1,0 +1,7 @@
+# Scripts que rodam na impressora (busybox ash) DEVEM ter fim de linha LF.
+*.sh text eol=lf
+# Arquivos do painel servidos por nginx: LF para consistencia.
+*.html text eol=lf
+*.css  text eol=lf
+*.js   text eol=lf
+*.json text eol=lf

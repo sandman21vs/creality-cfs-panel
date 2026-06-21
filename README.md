@@ -32,6 +32,23 @@ python -m http.server 8000      # serve o painel
 - Amostra real para dev offline: `references/sample-boxinfo.json` (usada pelo Demo).
 - `references/` tem clones de estudo (klipper-cfs, K1_Series_Klipper, Helper-Script-K1-CFS) — **fora do git**.
 
+## Instalação na impressora (add-on)
+
+K1/K1C/K1 Max **rooteadas** com o [Creality Helper Script](https://guilouz.github.io/Creality-Helper-Script-Wiki/)
+(Moonraker + Nginx já instalados). Dois caminhos:
+
+**A) Instalador standalone** (rápido, testável já) — via SSH na impressora:
+```bash
+git clone --depth 1 <repo-url> /usr/data/creality-cfs-panel-src
+sh /usr/data/creality-cfs-panel-src/install.sh        # → http://<ip>:4410
+sh /usr/data/creality-cfs-panel-src/uninstall.sh      # remover
+```
+Copia o painel p/ `/usr/data/creality-cfs-panel` e injeta um `server` block (porta **4410**)
+no `nginx.conf` do Helper Script, de forma **idempotente**. Servido da própria impressora,
+o painel já conecta no WS:9999 local (pré-preenche o host).
+
+**B) Módulo do Helper Script** (entra no menu Install/Remove) — ver [helper-script/README.md](helper-script/README.md).
+
 ## Arquitetura
 
 - **100% client-side** (sem backend). Servido por http (nginx do Helper Script / `http.server`).
@@ -77,8 +94,8 @@ Painéis da imagem de referência, cada um mapeado para WS:9999:
    **Ventiladores**, **Velocidade**, **Impressão atual** (com pause/resume/stop) e **Câmera** (MJPEG).
 4. **v4 — Abas:** **Controle XYZ** (jog/home/z-offset), **Arquivos locais** (listar/imprimir/excluir),
    **Registros**, **Vídeo**.
-5. **v5 — Empacotamento:** add-on do Helper Script (servir via nginx + entrada no menu); link no Mainsail;
-   criar repo no GitHub do usuário + push.
+5. **v5 — Empacotamento:** ✅ instalador standalone (`install.sh`/`uninstall.sh`, nginx :4410) +
+   módulo do Helper Script (`helper-script/`). ⏳ Falta: criar repo no GitHub + push; link no Mainsail.
 
 ## Estrutura de arquivos
 

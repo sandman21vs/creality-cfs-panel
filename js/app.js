@@ -126,7 +126,16 @@
   (async function init() {
     await CFSModel.loadCatalog();
     const saved = localStorage.getItem("cfs_ip");
-    if (saved) elIp.value = saved;
+    if (saved) {
+      elIp.value = saved;
+    } else {
+      // Servido a partir da própria impressora (add-on Helper Script): o WS:9999
+      // está no mesmo host. Pré-preenche para conectar sem digitar nada.
+      const host = location.hostname;
+      if (host && host !== "localhost" && host !== "127.0.0.1" && host !== "") {
+        elIp.value = host;
+      }
+    }
     $("#btn-connect").addEventListener("click", connect);
     $("#btn-demo").addEventListener("click", demo);
     elIp.addEventListener("keydown", (e) => { if (e.key === "Enter") connect(); });
