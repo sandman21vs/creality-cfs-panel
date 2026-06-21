@@ -56,6 +56,11 @@ function _cfs_panel_inject_nginx() {
         location = /index.html {
             add_header Cache-Control \"no-store, no-cache, must-revalidate\";
         }
+        location /gcodeimg/ {
+            alias /tmp/creality/local_gcode/;
+            access_log off;
+            expires 1h;
+        }
     }
 ${CFS_PANEL_MARK_END}"
 

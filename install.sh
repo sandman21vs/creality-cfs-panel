@@ -99,6 +99,12 @@ BLOCK="${MARK_BEGIN}
         location = /index.html {
             add_header Cache-Control \"no-store, no-cache, must-revalidate\";
         }
+        # miniaturas/preview dos gcodes (geradas pelo firmware Creality)
+        location /gcodeimg/ {
+            alias /tmp/creality/local_gcode/;
+            access_log off;
+            expires 1h;
+        }
     }
 ${MARK_END}"
 
