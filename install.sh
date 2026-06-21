@@ -19,7 +19,6 @@ PANEL_NAME="creality-cfs-panel"
 PANEL_PORT=4410
 SRC_DIR="$(dirname "$(readlink -f "$0")")"
 DEST_DIR="/usr/data/${PANEL_NAME}"
-NGINX_CONF="/etc/nginx/nginx.conf"
 NGINX_INITD="/etc/init.d/S50nginx"
 MARK_BEGIN="    # >>> ${PANEL_NAME} >>>"
 MARK_END="    # <<< ${PANEL_NAME} <<<"
@@ -28,17 +27,34 @@ info() { echo "Info: $*"; }
 ok()   { echo "OK: $*"; }
 err()  { echo "Error: $*" >&2; }
 
+# Descobre o nginx.conf ativo do Helper Script. O caminho varia entre firmwares:
+#   - Guilouz original: /usr/data/nginx/nginx/nginx.conf (carregado via -c no S50nginx)
+#   - fork Nik-oli:     /etc/nginx/nginx.conf
+# Estrategia: ler o '-c' do servico; senao, tentar candidatos conhecidos.
+detect_nginx_conf() {
+  local c=""
+  if [ -f "${NGINX_INITD}" ]; then
+    c="$(sed -n 's/.*-c[[:space:]]*\([^" ]*nginx\.conf\).*/\1/p' "${NGINX_INITD}" | head -n1)"
+    if [ -n "${c}" ] && [ -f "${c}" ]; then echo "${c}"; return; fi
+  fi
+  for c in /usr/data/nginx/nginx/nginx.conf /etc/nginx/nginx.conf; do
+    [ -f "${c}" ] && { echo "${c}"; return; }
+  done
+}
+
 # --- 1. Sanity checks ---------------------------------------------------------
 if [ ! -f "${SRC_DIR}/index.html" ]; then
   err "index.html nao encontrado em ${SRC_DIR} (rode este script de dentro do repo)."
   exit 1
 fi
 
-if [ ! -f "${NGINX_CONF}" ]; then
-  err "Nginx do Helper Script nao encontrado em ${NGINX_CONF}."
+NGINX_CONF="$(detect_nginx_conf)"
+if [ -z "${NGINX_CONF}" ]; then
+  err "nginx.conf do Helper Script nao encontrado."
   err "Instale 'Moonraker and Nginx' pelo Helper Script primeiro."
   exit 1
 fi
+info "Usando nginx.conf: ${NGINX_CONF}"
 
 if ! grep -qE '^[[:space:]]*http[[:space:]]*\{' "${NGINX_CONF}"; then
   err "Bloco 'http {' nao encontrado em ${NGINX_CONF}; config inesperada, abortando."

@@ -6,13 +6,25 @@ set -e
 
 PANEL_NAME="creality-cfs-panel"
 DEST_DIR="/usr/data/${PANEL_NAME}"
-NGINX_CONF="/etc/nginx/nginx.conf"
 NGINX_INITD="/etc/init.d/S50nginx"
 MARK_BEGIN="    # >>> ${PANEL_NAME} >>>"
 MARK_END="    # <<< ${PANEL_NAME} <<<"
 
 info() { echo "Info: $*"; }
 ok()   { echo "OK: $*"; }
+
+detect_nginx_conf() {
+  local c=""
+  if [ -f "${NGINX_INITD}" ]; then
+    c="$(sed -n 's/.*-c[[:space:]]*\([^" ]*nginx\.conf\).*/\1/p' "${NGINX_INITD}" | head -n1)"
+    if [ -n "${c}" ] && [ -f "${c}" ]; then echo "${c}"; return; fi
+  fi
+  for c in /usr/data/nginx/nginx/nginx.conf /etc/nginx/nginx.conf; do
+    [ -f "${c}" ] && { echo "${c}"; return; }
+  done
+}
+
+NGINX_CONF="$(detect_nginx_conf)"
 
 if [ -f "${NGINX_CONF}" ] && grep -qF "${MARK_BEGIN}" "${NGINX_CONF}"; then
   info "Removendo server block do Nginx..."

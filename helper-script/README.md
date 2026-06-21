@@ -30,7 +30,8 @@ Dentro de `set_paths()`, junto dos outros blocos:
   CFS_PANEL_SRC="${HS_FILES}/cfs-panel"
   CFS_PANEL_FOLDER="${USR_DATA}/creality-cfs-panel"
   CFS_PANEL_PORT="4410"
-  NGINX_MAIN_CONF="/etc/nginx/nginx.conf"
+  # Guilouz original usa /usr/data/nginx/nginx/nginx.conf; fork Nik-oli usa /etc/nginx/nginx.conf
+  NGINX_MAIN_CONF="/usr/data/nginx/nginx/nginx.conf"
 ```
 
 ### 4. Adicionar ao menu de instalação (`scripts/menu/K1/install_menu_K1.sh`)
