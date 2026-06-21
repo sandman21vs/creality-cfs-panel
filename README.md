@@ -1,71 +1,109 @@
-# Creality CFS Panel
+# Creality CFS Panel → Device Dashboard
 
-Um painel web para **ver e controlar o CFS (Creality Filament System)** em impressoras
-Creality K1/K1C/K1 Max **rooteadas com Klipper + Moonraker** — recriando, fora do
-CrealityPrint, as funções do painel "Configurações do filamento": ver os slots
-(cor/tipo/produto/% restante), **carregar (Feed) / descarregar (Retrair)** por slot,
-**AUTO** (auto-refill/continuidade) e **secagem**.
+Painel web (HTML/JS puro) que recria, **fora do CrealityPrint**, a página "Dispositivo" do
+CrealityPrint para impressoras **Creality K1/K1C/K1 Max rooteadas (Klipper + Moonraker)**:
+câmera, temperaturas, LED, ventiladores, velocidade, controle de impressão, **e o painel
+do CFS** (ver slots + Feed/Retrair + AUTO + secagem + editar). Pensado para rodar ao lado
+do Mainsail e ser empacotado no [Creality Helper Script](https://guilouz.github.io/Creality-Helper-Script-Wiki/).
 
-> ⚠️ Projeto independente, em fase de concepção. Para impressoras rooteadas (Helper Script).
-> Reaproveita as descobertas e o catálogo de materiais do fork
-> [OrcaSlicer-k1c-cfs](https://github.com/sandman21vs/OrcaSlicer-k1c-cfs).
+> **Este README é o escopo completo + handoff** (o projeto cresceu de "painel CFS" para
+> "dashboard de dispositivo"). Tudo que a próxima sessão precisa para continuar está aqui e
+> em [docs/device-api.md](docs/device-api.md) (referência de comandos) e
+> [docs/cfs-api.md](docs/cfs-api.md) (CFS) e [docs/research.md](docs/research.md) (landscape).
 
-## Objetivo
+---
 
-1. **Painel web do CFS** acessível junto do Mainsail/Fluidd (ou standalone).
-2. **Integração futura no [Creality Helper Script](https://guilouz.github.io/Creality-Helper-Script-Wiki/)**
-   como add-on instalável (ex.: forks K1-CFS do Nik-oli/gebauer).
-3. **Reuso do fork OrcaSlicer**: mesmo schema do objeto `box`, mesmo comando de
-   feed/retração e o **catálogo de materiais** (`filamentId → produto`).
+## Estado atual
 
-## Por que um painel novo (e não um "plugin Mainsail")
+- ✅ **v1 (FEITO):** painel **CFS read-only**. Conecta no WebSocket :9999, puxa `boxsInfo`+
+  `boxConfig` e renderiza os slots (anel colorido, label `1A–1D`, tipo/produto via `boxsInfo`
+  + catálogo, % restante, slot ativo, AUTO, temp/umidade da caixa). Tem modo **Demo** e
+  auto-refresh/reconexão. Git iniciado (branch `main`, 1º commit).
+- ⏳ **Próximo:** expandir para o **dashboard completo** (abaixo) e adicionar **controles** do CFS.
 
-O **Mainsail não tem API de plugin/componentes**. As únicas formas de estender são:
-macros como botões no dashboard (sem painel rico), temas (CSS), ou **fork** do Mainsail.
-Logo, a abordagem recomendada é um **painel web standalone leve** (HTML/JS ou Vue) que
-fala direto com o **Moonraker** (e, quando preciso, com o WebSocket 9999 da Creality),
-e que pode ser **servido ao lado do Mainsail** (mesma stack nginx do Helper Script) e
-linkado a partir dele. Mais simples de manter que um fork do Mainsail e portável pro
-Helper Script.
+## Como rodar / continuar
 
-Ver alternativas e trade-offs em [docs/research.md](docs/research.md).
+```bash
+cd C:/Users/vinic/Documents/GitHub/creality-cfs-panel
+python -m http.server 8000      # serve o painel
+# abrir http://localhost:8000  → botão "Demo" (amostra) ou IP 192.168.100.13 + Conectar
+```
+- Impressora de teste: **K1C em 192.168.100.13** (WS :9999 aberta; CFS com 4 slots).
+- Amostra real para dev offline: `references/sample-boxinfo.json` (usada pelo Demo).
+- `references/` tem clones de estudo (klipper-cfs, K1_Series_Klipper, Helper-Script-K1-CFS) — **fora do git**.
 
-## O que já existe (e o que falta)
+## Arquitetura
 
-| Peça | Existe? | Projeto |
+- **100% client-side** (sem backend). Servido por http (nginx do Helper Script / `http.server`).
+- **WS:9999 (Creality)** é o transporte principal — mesmo que o CrealityPrint usa:
+  - O navegador faz o handshake; a K1 usa frames **TEXT** e envia `heart_beat` → responder `"ok"`.
+  - **Telemetria** chega empurrada pelo printer (temps, fans, progresso, posição…).
+  - **Leitura sob demanda:** `{"method":"get","params":{<chave>:1}}` (`boxsInfo`, `boxConfig`,
+    `pFileList`, `reqHistory`, `reqElapseVideoList`, …).
+  - **Comandos:** `{"method":"set","params":{…}}`.
+- **Câmera:** stream MJPEG em `http://<ip>:8080/?action=stream`.
+- **Moonraker (:7125)** opcional para o objeto `box` (campos extras) e gcode; o caminho
+  principal é o WS:9999 (paridade com CrealityPrint).
+- **Catálogo de materiais** `js/materials.json` (66 itens, `filamentId→vendor/produto/tipo`),
+  derivado do fork OrcaSlicer / projeto K2-RFID.
+
+Toda a tabela de comandos `get`/`set` e os campos de telemetria estão em
+[docs/device-api.md](docs/device-api.md).
+
+## Escopo completo (espelhar a página "Dispositivo" do CrealityPrint)
+
+Painéis da imagem de referência, cada um mapeado para WS:9999:
+
+| Painel | Ler | Controlar |
 |---|---|---|
-| Módulo Klipper p/ CFS | ✅ | [ityshchenko/klipper-cfs](https://github.com/ityshchenko/klipper-cfs) |
-| Macros `BOX_*` (load/quit/cut...) | ✅ | [K1_Series_Klipper](https://github.com/CrealityOfficial/K1_Series_Klipper) |
-| Helper Script p/ K1 CFS | ✅ | [Nik-oli](https://github.com/Nik-oli/Creality-Helper-Script-K1-CFS) / [gebauer](https://github.com/gebauer/Creality-Helper-Script-K1-CFS) |
-| Sync de filamento no slicer | ✅ | nosso fork OrcaSlicer + PRs #13752/#14192 |
-| **Painel visual de CFS no Mainsail/Fluidd** | ❌ | **(este projeto)** |
+| **Câmera** | MJPEG `:8080/?action=stream` | — |
+| **Impressão atual** | `printStatus`/`deviceState`, `printProgress`, `printJobTime`, `printLeftTime`, `TotalLayer`/`layer`, `printName` | `set {pause:1/0}`, `set {stop:1}` |
+| **Temperaturas** (mesa/bico/câmara) | `bedTemp0`/`targetBedTemp0`, `nozzleTemp`/`targetNozzleTemp`, `boxTemp` (câmara) | `set {bedTempControl:{num:0,val}}`, `set {nozzleTempControl:val}`, câmara via `gcodeCmd` |
+| **LED** | `lightSw` | `set {lightSw:0/1}` |
+| **Ventiladores** (modelo/caso/lateral) | `fanPct`, `fanCase`, `fanAuxiliary` | `set {fan:v}`, `set {fanCase:v}`, `set {fanAuxiliary:v}` (ou `gcodeCmd M106 P0/P1/P2 S`) |
+| **Velocidade** (Silencioso/Estável 50/Padrão 100/Ultra 125) | `curFeedratePct` | `set {speedMode:n, setFeedratePct:v}` |
+| **Aba Controle XYZ** | `curPosition` | `set {autohome:"X Y Z"}`, `set {setPosition:"X<d> F3000"}`, `set {setZOffset:"+/-<d>"}` |
+| **Aba Arquivos locais** | `get {pFileList:…, onePageNum}` | `set {opGcodeFile:"printprt:<path>"}` / `"deleteprt:…"` / `"renameprt:…"` |
+| **Aba Registros** | `get {reqHistory:1}` | — |
+| **Aba Vídeo** | `get {reqElapseVideoList:1}` | — |
+| **Aba Filamento (CFS)** | `get {boxsInfo:1}`, `get {boxConfig:1}` | `feedInOrOut`, `boxConfig`, `boxTempControl`, `modifyMaterial`, `refreshBox`, `feedOption` (ver docs/cfs-api.md) |
 
-## Arquitetura proposta (rascunho)
+## Roadmap
 
-- **Leitura de estado:** `GET http://<ip>:7125/printer/objects/query?box` (Moonraker) →
-  objeto `box` com `same_material`, `T1..T4` (`material_type`, `color_value`,
-  `remain_len`, `state`). Detecção dinâmica via `/printer/objects/list` (procura `box`).
-- **Controle (Feed/Retrair):** WebSocket porta **9999** com
-  `{"method":"set","params":{"feedInOrOut":{"boxId":B,"materialId":S,"isFeed":1|0}}}`
-  (CFS = boxId 1; boxId 0 = suporte externo). Alternativa "Klipper-native": macros
-  `BOX_LOAD_MATERIAL_*` / `BOX_QUIT_MATERIAL` via `/printer/gcode/script`.
-- **AUTO / continuidade:** `{"method":"set","params":{"boxConfig":{"autoRefill":..,"cAutoFeed":..}}}`.
-- **Secagem:** `{"method":"set","params":{"boxTempControl":<temp>}}`.
-- **Nomes de produto:** catálogo `filamentId → (vendor, produto, tipo)` (66 entradas)
-  reaproveitado do fork — ver [docs/cfs-api.md](docs/cfs-api.md).
+1. **v1 — CFS read-only** ✅
+2. **v2 — CFS controles:** selecionar slot + **Feed/Retrair** (`feedInOrOut`); **AUTO** (`boxConfig`);
+   **secagem** (`boxTempControl`); **editar slot** (`modifyMaterial`); **refresh RFID** (`refreshBox`).
+3. **v3 — Telemetria + topo do dashboard:** parsear o stream WS; painéis **Temperaturas**, **LED**,
+   **Ventiladores**, **Velocidade**, **Impressão atual** (com pause/resume/stop) e **Câmera** (MJPEG).
+4. **v4 — Abas:** **Controle XYZ** (jog/home/z-offset), **Arquivos locais** (listar/imprimir/excluir),
+   **Registros**, **Vídeo**.
+5. **v5 — Empacotamento:** add-on do Helper Script (servir via nginx + entrada no menu); link no Mainsail;
+   criar repo no GitHub do usuário + push.
 
-## Roadmap (proposto)
+## Estrutura de arquivos
 
-1. **MVP read-only:** página que lê o `box` via Moonraker e mostra os 4 slots
-   (cor + tipo + produto via catálogo + % restante).
-2. **Feed/Retrair** por slot (WS:9999 `feedInOrOut`), com seleção de slot.
-3. **AUTO (auto-refill)** e **secagem**.
-4. **Empacotar como add-on do Helper Script** (servir via nginx + entrada no menu).
-5. (Opcional) avaliar contribuir um modo "Klipper-native" (só macros) p/ quem não quer o WS 9999.
+```
+creality-cfs-panel/
+├── index.html            # layout (v1: CFS; crescerá p/ dashboard com abas)
+├── css/styles.css        # tema dark estilo CrealityPrint
+├── js/
+│   ├── cfs-ws.js         # cliente WS:9999 (handshake/heartbeat/get/set/reconnect) — reusar p/ tudo
+│   ├── cfs-model.js      # parse boxsInfo/boxConfig + catálogo + normalização de cor
+│   ├── materials.json    # catálogo filamentId->produto (66)
+│   └── app.js            # render + auto-refresh (v1); crescerá p/ telemetria + abas
+├── docs/
+│   ├── device-api.md     # referência COMPLETA de comandos get/set + telemetria  ← LER
+│   ├── cfs-api.md        # protocolo WS:9999 + schema boxsInfo + boxId + portas
+│   └── research.md       # o que já existe (klipper-cfs, helper scripts) + a lacuna
+└── references/           # clones de estudo (gitignored)
+```
 
-## Status
+## Notas / gotchas (importante p/ a próxima sessão)
 
-- [x] Pesquisa inicial (landscape + lacuna) — [docs/research.md](docs/research.md)
-- [x] API reutilizável documentada — [docs/cfs-api.md](docs/cfs-api.md)
-- [ ] Decisão de stack (HTML/JS puro vs Vue) e forma de servir
-- [ ] MVP read-only
+- **Portas:** 9999 = WS controle Creality (principal) · 8080 = câmera MJPEG · 7125 = Moonraker · 80 = SPA Creality.
+- **WS:9999:** frames **TEXT**; responder `"ok"` ao `heart_beat`; a telemetria vem empurrada (parsear no `onmessage`).
+- **boxsInfo:** msg = `{"boxsInfo":{materialBoxs:[…], same_material:[…]}}`. **boxId 1 = CFS**, **boxId 0 = suporte externo** (type 1).
+- **Cor:** `"#0RRGGBB"` → usar os 6 hex finais (`#RRGGBB`).
+- **Produto exato:** `boxsInfo` já traz `name`/`vendor`/`type`; catálogo é fallback via `rfid` (id de 5 díg.).
+- **Controle precisa do WS:9999** (não dá só por Moonraker). Para impressora não-rooteada isso pode não existir — público-alvo é K1 rooteada (Helper Script).
+- **Validar sempre** contra a K1C real (192.168.100.13) e comparar lado a lado com o CrealityPrint.
